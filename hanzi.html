@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汉字田字格学习工具</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Pinyin library from CDN to convert characters to pinyin dynamically -->
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.3/dist/index.js"></script>
+    <!-- 
+      引入您提供的方正楷体 (FZKai-Z03-Regular) 国标教材级网络字体
+      该字体完美遵循中国大陆《通用规范汉字表》和九年义务教育语文教材写字表，
+      是目前最纯正、最适合学校教学、字形最规范的简体中文楷书。
+    -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-regular@1.0.1/font.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: {
+                            50: '#faf8f5',
+                            100: '#f4f0e6',
+                            200: '#ebdcb9',
+                        },
+                        stone: {
+                            900: '#1c1917',
+                        },
+                        calligraphy: {
+                            red: '#b91c1c',     // Classic Chinese seal red
+                            lightRed: '#fee2e2',// Dotted lines background red
+                            dashedRed: '#fca5a5'// Dashed lines red
+                        }
+                    },
+                    fontFamily: {
+                        // 精心调校的教材级楷体调用链：
+                        // 1. 优先尝试本地最规范的苹果教科书字体 (Kaiti SC, STKaiti) 或 Windows 楷体 (SimKai)
+                        // 2. 针对无内置字体的安卓平板或其它设备，无缝调用载入的国标“方正楷体”网络字体，确保全平台字形极度一致、端正
+                        kaiti: [
+                            // 优先尝试本地苹果/Windows系统自带标准楷体
+                            '"Kaiti SC"', 
+                            'STKaiti', 
+                            '"华文楷体"',
+                            'SimKai', 
+                            '"楷体"', 
+                            '"楷体_GB2312"',
+                            
+                            // 针对安卓平板等无本地楷体设备，全力匹配载入的方正楷体网络字体
+                            '"FZKai-Z03"',
+                            '"FZKai-Z03-Regular"',
+                            '"FZKai-Z03S"',
+                            '"FZKaiS-Regular"',
+                            '"方正楷体"',
+                            '"方正楷体简体"',
+                            
+                            // 其它兜底设备字体
+                            '"DFKai-SB"', 
+                            '"标楷体"',
+                            'serif'
+                        ],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Extra custom styling to ensure high-fidelity typography and layout */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #faf8f5;
+        }
+        
+        /* Premium custom scrollbar matching the calligraphy theme */
+        #display-container::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        #display-container::-webkit-scrollbar-track {
+            background: #faf8f5;
+        }
+        #display-container::-webkit-scrollbar-thumb {
+            background-color: #d6d3d1; /* stone-300 */
+            border-radius: 9999px;
+        }
+        #display-container::-webkit-scrollbar-thumb:hover {
+            background-color: #a8a29e; /* stone-400 */
+        }
+    </style>
+</head>
+<!-- Strictly lock body viewport and enforce layout robustness -->
+<body class="h-screen text-stone-900 flex flex-col overflow-hidden select-none">
+
+    <!-- Premium Minimalist Control Header -->
+    <header class="bg-cream-100 border-b border-stone-200 py-3.5 px-4 sm:px-6 shadow-sm z-10">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo / Title -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded border-[2.5px] border-calligraphy-red flex items-center justify-center font-kaiti font-bold text-calligraphy-red text-lg bg-white shadow-sm">
+                    田
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-wide text-stone-800">汉字田字格认字工具</h1>
+                    <p class="text-xs text-stone-500 hidden sm:block">楷书全屏自适应展示</p>
+                </div>
+            </div>
+
+            <!-- Input & Toggle Panel -->
+            <div class="flex items-center gap-2.5 w-full sm:w-auto flex-1 sm:max-w-xl justify-end">
+                <!-- Clearable text input -->
+                <div class="relative flex-1 max-w-md">
+                    <input 
+                        id="text-input" 
+                        type="text" 
+                        placeholder="输入汉字、词组或短句..." 
+                        class="w-full pl-3.5 pr-10 py-2 rounded-xl border border-stone-300 bg-white focus:outline-none focus:ring-2 focus:ring-calligraphy-red/40 focus:border-calligraphy-red text-base text-stone-800 shadow-inner transition-all placeholder-stone-400"
+                    />
+                    <!-- Clear Button -->
+                    <button 
+                        id="clear-btn" 
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors focus:outline-none hidden"
+                        title="清空内容"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Toggle Pinyin Button -->
+                <button 
+                    id="toggle-pinyin-btn" 
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-sm whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-calligraphy-red/50"
+                >
+                    <!-- Icon placeholder dynamically updated in JS -->
+                    <span id="pinyin-icon-container"></span>
+                    <span id="toggle-text">显示拼音</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Dynamic Display Canvas -->
+    <main id="display-container" class="flex-1 w-full p-5 sm:p-8 overflow-y-auto min-h-0">
+        <div id="grid-container" class="flex flex-wrap justify-center items-center content-center gap-x-6 gap-y-8 w-full min-h-full">
+            <!-- Dynamically generated Chinese characters & punctuation will be rendered here -->
+        </div>
+    </main>
+
+    <script>
+        const textInput = document.getElementById('text-input');
+        const clearBtn = document.getElementById('clear-btn');
+        const togglePinyinBtn = document.getElementById('toggle-pinyin-btn');
+        const toggleText = document.getElementById('toggle-text');
+        const pinyinIconContainer = document.getElementById('pinyin-icon-container');
+        const gridContainer = document.getElementById('grid-container');
+        const displayContainer = document.getElementById('display-container');
+
+        // State variables (Persists state inside the local browser storage for convenience)
+        let showPinyin = localStorage.getItem('showPinyin') !== 'false'; // default to true
+        let currentText = localStorage.getItem('savedText') || '学习'; // default on first load
+
+        // Set initial input value
+        textInput.value = currentText;
+
+        // Check if the external Pinyin library is fully loaded
+        function isPinyinLibAvailable() {
+            return typeof pinyinPro !== 'undefined';
+        }
+
+        // Mathematical grid solver to dynamically find the largest possible box size 'S'
+        function calculateOptimalBoxSize(n, containerWidth, containerHeight) {
+            let bestS = 0;
+
+            // Try different grid column layouts (from 1 column up to N columns)
+            for (let cols = 1; cols <= n; cols++) {
+                const rows = Math.ceil(n / cols);
+                
+                // Estimate gap spacing between elements (Tailwind gap-x-6 is 24px, gap-y-8 is 32px)
+                const gapX = 24 * (cols - 1);
+                const gapY = 32 * (rows - 1);
+
+                // Use exact available area with a 12px safe cushion to prevent subpixel layout wraps
+                const availableW = containerWidth - gapX - 12;
+                const availableH = containerHeight - gapY - 12;
+
+                if (availableW <= 0 || availableH <= 0) continue;
+
+                // Box width is limited directly by column count
+                const maxSByW = availableW / cols;
+
+                // Box height calculation always reserves vertical space for the Pinyin (factorY = 1.28)
+                const factorY = 1.28;
+                const maxSByH = (availableH / rows) / factorY;
+
+                const s = Math.min(maxSByW, maxSByH);
+                if (s > bestS) {
+                    bestS = s;
+                }
+            }
+
+            // Constrain minimum size to 48px to avoid disappearing for extremely long phrases,
+            // and cap maximum size to 520px for ideal calligraphy layout aesthetics
+            return Math.max(48, Math.min(bestS, 520));
+        }
+
+        // Core Render Function
+        function render(preserveScroll = false) {
+            const rawText = textInput.value;
+            localStorage.setItem('savedText', rawText);
+
+            // Toggle show/hide clear button
+            if (rawText) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            // 1. Capture current scroll position to prevent scroll-to-top layout jump
+            const savedScrollTop = preserveScroll ? displayContainer.scrollTop : 0;
+            const savedScrollLeft = preserveScroll ? displayContainer.scrollLeft : 0;
+
+            // Handle empty input state
+            if (!rawText) {
+                gridContainer.innerHTML = `
+                    <div class="text-stone-400 font-sans text-center text-lg p-8 max-w-sm">
+                        请在上方输入汉字、词语或句子，即可在此以全屏尺寸显示田字格
+                    </div>
+                `;
+                return;
+            }
+
+            // Clear container content *before* measuring to eliminate scrollbars and get 100% accurate viewport dimensions.
+            gridContainer.innerHTML = '';
+
+            const chars = Array.from(rawText);
+            const n = chars.length;
+
+            // Programmatically query exact active container padding via Window ComputedStyle.
+            const style = window.getComputedStyle(displayContainer);
+            const padLeft = parseFloat(style.paddingLeft) || 0;
+            const padRight = parseFloat(style.paddingRight) || 0;
+            const padTop = parseFloat(style.paddingTop) || 0;
+            const padBottom = parseFloat(style.paddingBottom) || 0;
+
+            const containerW = displayContainer.clientWidth - padLeft - padRight;
+            const containerH = displayContainer.clientHeight - padTop - padBottom;
+
+            // Calculate adaptive font and box dimension (always preserves Pinyin space)
+            const S = calculateOptimalBoxSize(n, containerW, containerH);
+
+            // Update Pinyin Button aesthetics
+            if (showPinyin) {
+                // Enabled state: Accent red
+                togglePinyinBtn.className = "flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-sm whitespace-nowrap bg-calligraphy-red hover:bg-red-800 text-white focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-calligraphy-red/50 cursor-pointer";
+                toggleText.textContent = '隐藏拼音';
+                pinyinIconContainer.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4.5 h-4.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    </svg>
+                `;
+            } else {
+                // Disabled state: Dark Gray
+                togglePinyinBtn.className = "flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-sm whitespace-nowrap bg-stone-600 hover:bg-stone-700 text-white focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-stone-500 cursor-pointer";
+                toggleText.textContent = '显示拼音';
+                pinyinIconContainer.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4.5 h-4.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                `;
+            }
+
+            // Render each item (Character or punctuation block)
+            chars.forEach((char, index) => {
+                const isChinese = /[\u4e00-\u9fa5]/.test(char);
+                
+                // Fetch pinyin character-by-character to guarantee 100% accurate 1-to-1 matching
+                let py = '';
+                if (isChinese && isPinyinLibAvailable()) {
+                    py = pinyinPro.pinyin(char, { toneType: 'symbol' });
+                }
+
+                // Outer block wrapper
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = "flex flex-col items-center justify-end transition-all duration-200 select-none";
+
+                // Pinyin container: Its height is ALWAYS exact linear ratio (S * 0.28) to fit perfectly within factorY (1.28)
+                const pinyinElement = document.createElement('div');
+                const pinyinHeight = isChinese ? Math.floor(S * 0.28) : 0;
+                pinyinElement.style.height = `${pinyinHeight}px`;
+                pinyinElement.style.fontSize = `${Math.max(10, Math.floor(S * 0.22))}px`;
+                
+                // Premium soft fade & visibility transitions
+                if (showPinyin && isChinese) {
+                    pinyinElement.className = "flex items-end justify-center font-sans font-bold text-calligraphy-red select-text select-all tracking-wide opacity-100 transition-opacity duration-200";
+                    pinyinElement.textContent = py;
+                } else {
+                    pinyinElement.className = "flex items-end justify-center font-sans font-bold text-calligraphy-red select-text select-all tracking-wide opacity-0 pointer-events-none transition-opacity duration-200";
+                    pinyinElement.textContent = py; // Keep text inside to maintain layout subpixel calculations
+                }
+                cardWrapper.appendChild(pinyinElement);
+
+                // Body Box (Tian Zi Ge or custom layout for punctuation)
+                const charBox = document.createElement('div');
+                
+                // Handle Space Characters
+                if (char === ' ' || char === '　') {
+                    charBox.style.width = `${Math.floor(S * 0.4)}px`;
+                    charBox.style.height = `${S}px`;
+                    charBox.className = "relative transition-all duration-200";
+                } 
+                // Handle Standard Chinese Characters
+                else if (isChinese) {
+                    charBox.style.width = `${S}px`;
+                    charBox.style.height = `${S}px`;
+                    charBox.className = "relative border-[3px] sm:border-[4px] border-calligraphy-red rounded-xl bg-white shadow-md flex items-center justify-center transition-all duration-200";
+
+                    // Horizontal dotted line in the middle
+                    const horizontalLine = document.createElement('div');
+                    horizontalLine.className = "absolute top-1/2 left-0 w-full h-0 border-t-2 border-dashed border-red-200 pointer-events-none -translate-y-1/2";
+                    charBox.appendChild(horizontalLine);
+
+                    // Vertical dotted line in the middle
+                    const verticalLine = document.createElement('div');
+                    verticalLine.className = "absolute left-1/2 top-0 h-full w-0 border-l-2 border-dashed border-red-200 pointer-events-none -translate-x-1/2";
+                    charBox.appendChild(verticalLine);
+
+                    // Chinese calligraphy font display
+                    const textSpan = document.createElement('span');
+                    textSpan.className = "font-kaiti text-stone-900 leading-none select-text select-all z-10 transition-all duration-200";
+                    textSpan.style.fontSize = `${Math.floor(S * 0.82)}px`;
+                    textSpan.textContent = char;
+                    charBox.appendChild(textSpan);
+                } 
+                // Handle Symbols and Punctuation (Displayed neatly inline without grids)
+                else {
+                    charBox.style.width = `${Math.max(24, Math.floor(S * 0.5))}px`;
+                    charBox.style.height = `${S}px`;
+                    charBox.className = "relative flex items-center justify-center transition-all duration-200";
+
+                    const textSpan = document.createElement('span');
+                    textSpan.className = "font-sans font-semibold text-stone-600 leading-none select-text select-all z-10 transition-all duration-200";
+                    textSpan.style.fontSize = `${Math.floor(S * 0.7)}px`;
+                    textSpan.textContent = char;
+                    charBox.appendChild(textSpan);
+                }
+
+                cardWrapper.appendChild(charBox);
+                gridContainer.appendChild(cardWrapper);
+            });
+
+            // Two-step Scroll State Preservation
+            if (preserveScroll) {
+                displayContainer.scrollTop = savedScrollTop;
+                displayContainer.scrollLeft = savedScrollLeft;
+                
+                requestAnimationFrame(() => {
+                    displayContainer.scrollTop = savedScrollTop;
+                    displayContainer.scrollLeft = savedScrollLeft;
+                });
+            }
+        }
+
+        // --- INTERACTIVE ACTIONS & LISTENERS ---
+
+        // Real-time input changes (Resets scroll to top for fresh layout viewing)
+        textInput.addEventListener('input', () => {
+            render(false);
+        });
+
+        // Toggle Pinyin Action (Preserves scroll perfectly)
+        togglePinyinBtn.addEventListener('click', () => {
+            showPinyin = !showPinyin;
+            localStorage.setItem('showPinyin', showPinyin);
+            render(true);
+        });
+
+        // Quick Input Clear (Resets scroll)
+        clearBtn.addEventListener('click', () => {
+            textInput.value = '';
+            textInput.focus();
+            render(false);
+        });
+
+        // Adaptive window resize handler (Recalculate dimensions without jumpiness)
+        window.addEventListener('resize', () => {
+            render(true);
+        });
+
+        // --- COMPATIBILITY POLLING ---
+        // Dynamically polls if pinyin-pro has loaded completely, updating layout on load
+        let checkLibraryLoads = 0;
+        const libraryChecker = setInterval(() => {
+            checkLibraryLoads++;
+            if (isPinyinLibAvailable()) {
+                clearInterval(libraryChecker);
+                render(false);
+            } else if (checkLibraryLoads > 30) {
+                // Stop polling after 4.5 seconds to conserve battery
+                clearInterval(libraryChecker);
+            }
+        }, 150);
+
+        // Run Initial Render on Startup
+        render(false);
+    </script>
+</body>
+</html>
