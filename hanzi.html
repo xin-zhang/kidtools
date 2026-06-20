@@ -2,14 +2,14 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>汉字田字格学习工具</title>
     <!-- Tailwind CSS for modern responsive styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Pinyin library from CDN to convert characters to pinyin dynamically -->
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.3/dist/index.js"></script>
     <!-- 
-      引入您提供的方正楷体 (FZKai-Z03-Regular) 国标教材级网络字体
+      引入方正楷体 (FZKai-Z03-Regular) 国标教材级网络字体
       该字体完美遵循中国大陆《通用规范汉字表》和九年义务教育语文教材写字表，
       是目前最纯正、最适合学校教学、字形最规范的简体中文楷书。
     -->
@@ -88,8 +88,12 @@
         }
     </style>
 </head>
-<!-- Strictly lock body viewport and enforce layout robustness -->
-<body class="h-screen text-stone-900 flex flex-col overflow-hidden select-none">
+<!-- 
+  FIX 1: 废弃传统的 h-screen (100vh)，改用内联样式设定 height: 100vh; height: 100dvh;
+  这能完美兼容旧版浏览器，同时在 iPad/安卓平板等现代移动浏览器上自动启用 100dvh 动态视口高度，
+  彻底剔除浏览器地址栏、标签栏和工具栏占用的空间，实现真正的全屏幕绝对不溢出、不裁剪。
+-->
+<body class="text-stone-900 flex flex-col overflow-hidden select-none" style="height: 100vh; height: 100dvh;">
 
     <!-- Premium Minimalist Control Header -->
     <header class="bg-cream-100 border-b border-stone-200 py-3.5 px-4 sm:px-6 shadow-sm z-10">
@@ -142,8 +146,7 @@
     </header>
 
     <!-- Main Dynamic Display Canvas -->
-    <!-- 精确修改点：移除了副标题，并将底部留白 padding 提升至 160px (pb-40) 以符合新排版要求 -->
-    <main id="display-container" class="flex-1 w-full pt-5 px-5 pb-40 sm:pt-8 sm:px-8 sm:pb-40 overflow-y-auto min-h-0">
+    <main id="display-container" class="flex-1 w-full pt-5 px-5 pb-20 sm:pt-8 sm:px-8 sm:pb-20 overflow-y-auto min-h-0">
         <div id="grid-container" class="flex flex-wrap justify-center items-center content-center gap-x-6 gap-y-8 w-full min-h-full">
             <!-- Dynamically generated Chinese characters & punctuation will be rendered here -->
         </div>
@@ -160,7 +163,7 @@
 
         // State variables (Persists state inside the local browser storage for convenience)
         let showPinyin = localStorage.getItem('showPinyin') !== 'false'; // default to true
-        let currentText = localStorage.getItem('savedText') || '汉字'; // 精确修改点：将默认展示字符调整为“汉字”
+        let currentText = localStorage.getItem('savedText') || '汉字'; // 默认展示字符调整为“汉字”
 
         // Set initial input value
         textInput.value = currentText;
@@ -389,6 +392,14 @@
         window.addEventListener('resize', () => {
             render(true);
         });
+
+        // FIX 2: 增加对 visualViewport 尺寸变化事件的监听。
+        // 这解决了平板端地址栏由于上下滚动被动收缩、展开，或键盘弹出收起时，页面高度计算不能立即响应的Bug。
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                render(true);
+            });
+        }
 
         // --- COMPATIBILITY POLLING ---
         // Dynamically polls if pinyin-pro has loaded completely, updating layout on load
