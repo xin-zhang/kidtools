@@ -102,7 +102,6 @@
                 </div>
                 <div>
                     <h1 class="text-base font-bold tracking-wide text-stone-800">汉字田字格认字工具</h1>
-                    <p class="text-xs text-stone-500 hidden sm:block">楷书全屏自适应展示</p>
                 </div>
             </div>
 
@@ -160,7 +159,7 @@
 
         // State variables (Persists state inside the local browser storage for convenience)
         let showPinyin = localStorage.getItem('showPinyin') !== 'false'; // default to true
-        let currentText = localStorage.getItem('savedText') || '学习'; // default on first load
+        let currentText = localStorage.getItem('savedText') || '汉字'; // default on first load
 
         // Set initial input value
         textInput.value = currentText;
