@@ -142,7 +142,8 @@
     </header>
 
     <!-- Main Dynamic Display Canvas -->
-    <main id="display-container" class="flex-1 w-full p-5 sm:p-8 overflow-y-auto min-h-0">
+    <!-- 精确修改点：将 pb-10 和 sm:pb-10 设为 40px，并在移动端/平板设备保留该底部空白填充 -->
+    <main id="display-container" class="flex-1 w-full pt-5 px-5 pb-10 sm:pt-8 sm:px-8 sm:pb-10 overflow-y-auto min-h-0">
         <div id="grid-container" class="flex flex-wrap justify-center items-center content-center gap-x-6 gap-y-8 w-full min-h-full">
             <!-- Dynamically generated Chinese characters & punctuation will be rendered here -->
         </div>
