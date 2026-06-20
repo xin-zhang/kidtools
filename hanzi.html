@@ -146,7 +146,8 @@
     </header>
 
     <!-- Main Dynamic Display Canvas -->
-    <main id="display-container" class="flex-1 w-full pt-5 px-5 pb-20 sm:pt-8 sm:px-8 sm:pb-20 overflow-y-auto min-h-0">
+    <!-- 精确修改点：将底部留白 padding 改回 40px (pb-10) 以腾出更多竖向显示空间 -->
+    <main id="display-container" class="flex-1 w-full pt-5 px-5 pb-10 sm:pt-8 sm:px-8 sm:pb-10 overflow-y-auto min-h-0">
         <div id="grid-container" class="flex flex-wrap justify-center items-center content-center gap-x-6 gap-y-8 w-full min-h-full">
             <!-- Dynamically generated Chinese characters & punctuation will be rendered here -->
         </div>
@@ -393,7 +394,7 @@
             render(true);
         });
 
-        // FIX 2: 增加对 visualViewport 尺寸变化事件的监听。
+        // 增加对 visualViewport 尺寸变化事件的监听。
         // 这解决了平板端地址栏由于上下滚动被动收缩、展开，或键盘弹出收起时，页面高度计算不能立即响应的Bug。
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
