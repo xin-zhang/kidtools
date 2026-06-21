@@ -8,12 +8,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Pinyin library from CDN to convert characters to pinyin dynamically -->
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.3/dist/index.js"></script>
+    
     <!-- 
-      引入方正楷体 (FZKai-Z03-Regular) 国标教材级网络字体
-      该字体完美遵循中国大陆《通用规范汉字表》和九年义务教育语文教材写字表，
-      是目前最纯正、最适合学校教学、字形最规范的简体中文楷书。
+      1. 引入方正楷体 (FZKai-Z03-Regular) 国标教材级网络字体
     -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cn-fontsource-fz-kai-z-03-regular@1.0.1/font.min.css" />
+    <!-- 
+      2. 引入霞鹜文楷 (LXGW WenKai Screen) 极佳硬笔书法手写网络字体
+    -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css" />
+    <!-- 
+      3. 引入规范流畅、易于识别的经典行草网络字体：之芒行 (Zhi Mang Xing)
+      该字体笔意连绵、结构端正、清晰易读，是非常实用且富有书卷气的普通草书/行草体。
+    -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap" />
+
     <script>
         tailwind.config = {
             theme: {
@@ -34,31 +43,47 @@
                         }
                     },
                     fontFamily: {
-                        // 精心调校的教材级楷体调用链：
-                        // 1. 优先尝试本地最规范的苹果教科书字体 (Kaiti SC, STKaiti) 或 Windows 楷体 (SimKai)
-                        // 2. 针对无内置字体的安卓平板或其它设备，无缝调用载入的国标“方正楷体”网络字体，确保全平台字形极度一致、端正
+                        // 标准楷书调用链：优先网络方正楷体，其次本地系统级教材楷体
                         kaiti: [
-                            // 优先尝试本地苹果/Windows系统自带标准楷体
-                            '"Kaiti SC"', 
-                            'STKaiti', 
-                            '"华文楷体"',
-                            'SimKai', 
-                            '"楷体"', 
-                            '"楷体_GB2312"',
-                            
-                            // 针对安卓平板等无本地楷体设备，全力匹配载入的方正楷体网络字体
                             '"FZKai-Z03"',
                             '"FZKai-Z03-Regular"',
                             '"FZKai-Z03S"',
                             '"FZKaiS-Regular"',
                             '"方正楷体"',
                             '"方正楷体简体"',
-                            
-                            // 其它兜底设备字体
+                            '"Kaiti SC"', 
+                            'STKaiti', 
+                            '"华文楷体"',
+                            'SimKai', 
+                            '"楷体"', 
+                            '"楷体_GB2312"',
                             '"DFKai-SB"', 
                             '"标楷体"',
                             'serif'
                         ],
+                        // 标准仿宋调用链：高兼容性本地印刷仿宋
+                        fangsong: [
+                            '"STFangsong"', 
+                            '"华文仿宋"', 
+                            '"FangSong"', 
+                            '"仿宋"', 
+                            '"仿宋_GB2312"', 
+                            'serif'
+                        ],
+                        // 手写体调用链：屏幕优化版霞鹜硬笔文楷
+                        handwriting: [
+                            '"LXGW WenKai Screen"',
+                            '"LXGW WenKai"',
+                            '"Kaiti SC"',
+                            'system-ui',
+                            'serif'
+                        ],
+                        // 草书调用链：优先加载结构端正、流畅易读的之芒行草网络字体，结合 system cursive 兜底
+                        caoshu: [
+                            '"Zhi Mang Xing"',
+                            'cursive',
+                            'serif'
+                        ]
                     }
                 }
             }
@@ -88,19 +113,14 @@
         }
     </style>
 </head>
-<!-- 
-  FIX 1: 废弃传统的 h-screen (100vh)，改用内联样式设定 height: 100vh; height: 100dvh;
-  这能完美兼容旧版浏览器，同时在 iPad/安卓平板等现代移动浏览器上自动启用 100dvh 动态视口高度，
-  彻底剔除浏览器地址栏、标签栏和工具栏占用的空间，实现真正的全屏幕绝对不溢出、不裁剪。
--->
 <body class="text-stone-900 flex flex-col overflow-hidden select-none" style="height: 100vh; height: 100dvh;">
 
     <!-- Premium Minimalist Control Header -->
     <header class="bg-cream-100 border-b border-stone-200 py-3.5 px-4 sm:px-6 shadow-sm z-10">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
             
             <!-- Logo / Title -->
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2.5 shrink-0">
                 <div class="w-8 h-8 rounded border-[2.5px] border-calligraphy-red flex items-center justify-center font-kaiti font-bold text-calligraphy-red text-lg bg-white shadow-sm">
                     田
                 </div>
@@ -110,9 +130,9 @@
             </div>
 
             <!-- Input & Toggle Panel -->
-            <div class="flex items-center gap-2.5 w-full sm:w-auto flex-1 sm:max-w-xl justify-end">
+            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto flex-1 lg:max-w-4xl justify-end">
                 <!-- Clearable text input -->
-                <div class="relative flex-1 max-w-md">
+                <div class="relative flex-1 min-w-[200px] max-w-md">
                     <input 
                         id="text-input" 
                         type="text" 
@@ -131,10 +151,30 @@
                     </button>
                 </div>
 
+                <!-- 字体选择单选控件 (Segmented Control Button Group) - 已加入草书选项 -->
+                <div class="flex bg-stone-200/70 p-1 rounded-xl shrink-0" id="font-selector">
+                    <button 
+                        data-font="kaiti" 
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 focus:outline-none"
+                    >楷书</button>
+                    <button 
+                        data-font="fangsong" 
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 focus:outline-none"
+                    >仿宋</button>
+                    <button 
+                        data-font="handwriting" 
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 focus:outline-none"
+                    >手写</button>
+                    <button 
+                        data-font="caoshu" 
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 focus:outline-none"
+                    >草书</button>
+                </div>
+
                 <!-- Toggle Pinyin Button -->
                 <button 
                     id="toggle-pinyin-btn" 
-                    class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-sm whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-calligraphy-red/50"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 shadow-sm whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-calligraphy-red/50 shrink-0"
                 >
                     <!-- Icon placeholder dynamically updated in JS -->
                     <span id="pinyin-icon-container"></span>
@@ -146,7 +186,6 @@
     </header>
 
     <!-- Main Dynamic Display Canvas -->
-    <!-- 精确修改点：将底部留白 padding 改回 40px (pb-10) 以腾出更多竖向显示空间 -->
     <main id="display-container" class="flex-1 w-full pt-5 px-5 pb-10 sm:pt-8 sm:px-8 sm:pb-10 overflow-y-auto min-h-0">
         <div id="grid-container" class="flex flex-wrap justify-center items-center content-center gap-x-6 gap-y-8 w-full min-h-full">
             <!-- Dynamically generated Chinese characters & punctuation will be rendered here -->
@@ -161,10 +200,12 @@
         const pinyinIconContainer = document.getElementById('pinyin-icon-container');
         const gridContainer = document.getElementById('grid-container');
         const displayContainer = document.getElementById('display-container');
+        const fontSelector = document.getElementById('font-selector');
 
         // State variables (Persists state inside the local browser storage for convenience)
         let showPinyin = localStorage.getItem('showPinyin') !== 'false'; // default to true
-        let currentText = localStorage.getItem('savedText') || '汉字'; // 默认展示字符调整为“汉字”
+        let currentText = localStorage.getItem('savedText') || '汉字'; // default to "汉字"
+        let currentFont = localStorage.getItem('savedFont') || 'kaiti'; // default to "kaiti" (楷书)
 
         // Set initial input value
         textInput.value = currentText;
@@ -208,6 +249,21 @@
             // Constrain minimum size to 48px to avoid disappearing for extremely long phrases,
             // and cap maximum size to 520px for ideal calligraphy layout aesthetics
             return Math.max(48, Math.min(bestS, 520));
+        }
+
+        // Update CSS classes for the Segmented Font Switcher
+        function updateFontSelectorUI() {
+            const buttons = fontSelector.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const fontVal = btn.getAttribute('data-font');
+                if (fontVal === currentFont) {
+                    // Active style: White pill with subtle shadow
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-950 shadow-sm transition-all duration-200 focus:outline-none";
+                } else {
+                    // Inactive style: Dull text
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-stone-500 hover:text-stone-800 transition-all duration-200 focus:outline-none";
+                }
+            });
         }
 
         // Core Render Function
@@ -277,6 +333,9 @@
                 `;
             }
 
+            // Sync font control styles
+            updateFontSelectorUI();
+
             // Render each item (Character or punctuation block)
             chars.forEach((char, index) => {
                 const isChinese = /[\u4e00-\u9fa5]/.test(char);
@@ -334,7 +393,8 @@
 
                     // Chinese calligraphy font display
                     const textSpan = document.createElement('span');
-                    textSpan.className = "font-kaiti text-stone-900 leading-none select-text select-all z-10 transition-all duration-200";
+                    // Applying dynamic currentFont styling: font-kaiti, font-fangsong, font-handwriting, or font-caoshu
+                    textSpan.className = `font-${currentFont} text-stone-900 leading-none select-text select-all z-10 transition-all duration-200`;
                     textSpan.style.fontSize = `${Math.floor(S * 0.82)}px`;
                     textSpan.textContent = char;
                     charBox.appendChild(textSpan);
@@ -373,6 +433,18 @@
         // Real-time input changes (Resets scroll to top for fresh layout viewing)
         textInput.addEventListener('input', () => {
             render(false);
+        });
+
+        // Font Switch Listener
+        fontSelector.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const fontVal = btn.getAttribute('data-font');
+            if (fontVal && fontVal !== currentFont) {
+                currentFont = fontVal;
+                localStorage.setItem('savedFont', currentFont);
+                render(true); // Preserve layout scroll on font change
+            }
         });
 
         // Toggle Pinyin Action (Preserves scroll perfectly)
